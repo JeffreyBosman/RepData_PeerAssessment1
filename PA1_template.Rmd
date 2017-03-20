@@ -22,6 +22,7 @@ Underneath a plot of the total steps taken each day.
 library(dplyr) 
 TotalSteps<- df %>% filter(complete.cases(df)) %>%group_by(date) %>% summarize(TotalSteps = sum(steps))
 hist(TotalSteps$TotalSteps,main='Total number of steps taken each day',col = 'purple',xlab='Total Steps')
+##dev.copy(png,'myplot1.png')  & dev.off()
 
 ```
 
@@ -45,6 +46,7 @@ The avarage daily steps pattern of a human in a day.
 TimeSeries <- df %>% filter(complete.cases(df)) %>%group_by(interval) %>% summarize(meansteps = mean(steps))
 
 plot(TimeSeries$meansteps~TimeSeries$interval,type='l',main='Avarage daily activity pattern' , col='purple',xlab='Interval', ylab='Avarage steps')
+##dev.copy(png,'myplot2.png')  & dev.off()
 ```
 
 On avarage the most steps are made in the following time interval:
@@ -89,6 +91,7 @@ First of all we do the same R statement but then with the NewData to calculate t
 TotalStepsNew<- NewData%>%group_by(date) %>% summarize(TotalStepsNew = sum(steps))
 
 hist(TotalStepsNew$TotalStepsNew,main='Total number of steps taken each day',col = 'purple',xlab='Total Steps')
+##dev.copy(png,'myplot3.png')  & dev.off()
 ```
 
 ```{r mean new}
@@ -128,6 +131,7 @@ xyplot(mean.steps~interval|type,
         data = mean.steps.by.interval.imp, 
         layout=c(1,2),
         ylab = "Number of steps")
+##dev.copy(png,'myplot4.png')  & dev.off()
 
 ```
 
