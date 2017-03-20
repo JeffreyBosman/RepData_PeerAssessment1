@@ -1,25 +1,135 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+Activity Monitoring
+================================
+
+Author: Jeffrey Bosman
+
+This report is written for Coursera's 5th course 'Reproducible Research' Peer assessment in week 2. It contains an analyse of a dataset about personal movement using activity monitoring devices such as a Fitbit etc..
+
+## Reading the data
+
+Reading the activity.csv file as a dataframe (variable:df) is done with the following r code:
+
+```{r reading in the data,echo=TRUE}
+
+Activity <- read.csv(file='activity.csv',sep = ',',header=TRUE)
+df<- as.data.frame(Activity)
+```
+
+##Histogram of the total number of steps taken each day
+
+Underneath a plot of the total steps taken each day.
+```{r histogram , message=FALSE, warning=FALSE}
+library(dplyr) 
+TotalSteps<- df %>% filter(complete.cases(df)) %>%group_by(date) %>% summarize(TotalSteps = sum(steps))
+hist(TotalSteps$TotalSteps,main='Total number of steps taken each day',col = 'purple',xlab='Total Steps')
+
+```
+
+###Mean and median total steps
+
+mean:
+```{r mean}
+mean(TotalSteps$TotalSteps)
+```
+median:
+```{r median}
+median(TotalSteps$TotalSteps)
+```
 
 
-## Loading and preprocessing the data
+##Avarage daily activity pattern
+
+The avarage daily steps pattern of a human in a day. 
+
+```{r Avarage day pattern}
+TimeSeries <- df %>% filter(complete.cases(df)) %>%group_by(interval) %>% summarize(meansteps = mean(steps))
+
+plot(TimeSeries$meansteps~TimeSeries$interval,type='l',main='Avarage daily activity pattern' , col='purple',xlab='Interval', ylab='Avarage steps')
+```
+
+On avarage the most steps are made in the following time interval:
+
+```{r most steps made interval , message=FALSE, warning=FALSE}
+TimeSeries %>% arrange(desc(meansteps)) %>% filter(row_number()==1)
+
+```
+
+##Missing values
+
+I calculate the missing values as follow:
+```{r missing values}
+## I made the table first a matrix, just so i can assign column name to it
+table<- as.matrix(table(complete.cases(df)))
+colnames(table) <- 'missing?' 
+```
+
+There are 2304 rows with missing values. We are going fill them with the mean of the interval.
+
+```{r make a new data set, message=FALSE, warning=FALSE}
+library(plyr)
+##join the avarage of a interval by df
+joined <- join(df,TimeSeries,by='interval',type='left')
+##splits the new data into sets where steps is NA and where steps are filled
+unloadNamespace("plyr") ## Unfortunately the plyr package masked the summarize function, so i unload the plr function
+
+NoSteps <-joined[is.na(joined$steps),]
+YesSteps <- joined[!is.na(joined$steps),]
+##Fill the NA with the mean of the steps of a interval
+means <- NoSteps$meansteps
+NoSteps$steps <- means
+## Generate new data set
+NewData <- rbind(YesSteps,NoSteps)
+NewData <- NewData[,-4]
+```
+
+##New Data histogram
+
+First of all we do the same R statement but then with the NewData to calculate the TotalSteps taken each day.
+```{r NewData histogram}
+TotalStepsNew<- NewData%>%group_by(date) %>% summarize(TotalStepsNew = sum(steps))
+
+hist(TotalStepsNew$TotalStepsNew,main='Total number of steps taken each day',col = 'purple',xlab='Total Steps')
+```
+
+```{r mean new}
+mean(TotalStepsNew$TotalStepsNew)
+```
 
 
+```{r median new}
+median(TotalStepsNew$TotalStepsNew)
+```
 
-## What is mean total number of steps taken per day?
+##Are there differences in activity patterns between weekdays and weekends?
+
+We buil a indifier for weekend and weekdays in the new data set NewData. After that we use ifelse to indify the day is weekend or the day is a weekday.
+```{r make a indicator for weekend and weekdays}
+NewData$ind_weekend <- weekdays(as.Date(NewData$date)) %in% c('zondag', 'zaterdag','saturday','sunday') ## my systemlanquage is dutch so i wrote it in dutch and for reproducibility in english to.
+
+##make a function for not in
+`%not in%` <- function (x, table) is.na(match(x, table, nomatch=NA_integer_))
+
+NewData$ind_weekday <- weekdays(as.Date(NewData$date)) %not in% c('zondag', 'zaterdag','saturday','sunday')
+
+NewData$type <- ifelse(NewData$ind_weekend ==TRUE ,'weekend','weekday')
+
+```
+
+```{r plot weekday weekend}
+
+library(lattice) 
+mean.steps.by.interval.imp <- NewData  %>% 
+   group_by(interval, type) %>% 
+   summarise(mean.steps=mean(steps))
 
 
+xyplot(mean.steps~interval|type, 
+        type="l", 
+        data = mean.steps.by.interval.imp, 
+        layout=c(1,2),
+        ylab = "Number of steps")
 
-## What is the average daily activity pattern?
+```
 
+You can see that on avarage a person is more active during the workweek then in the weekend. Both have the same pike in the morning.
 
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
